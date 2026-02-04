@@ -1,21 +1,22 @@
 import React, { useState, useCallback } from 'react';
 import InputForm from './components/InputForm';
 import Dashboard from './components/Dashboard';
-import { ExecutivePulse, GeminiInput } from './types';
+import RawDataView from './components/RawDataView';
+import { AnalysisResult, GeminiInput, ExecutivePulse, RawShippingData } from './types';
 import { analyzeSupplyChainData } from './services/geminiService';
 
 const App: React.FC = () => {
-  const [executivePulse, setExecutivePulse] = useState<ExecutivePulse | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFormSubmit = useCallback(async (input: GeminiInput) => {
     setIsLoading(true);
     setError(null);
-    setExecutivePulse(null);
+    setAnalysisResult(null);
     try {
       const result = await analyzeSupplyChainData(input);
-      setExecutivePulse(result);
+      setAnalysisResult(result);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -26,8 +27,13 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array means this function is created once.
+  }, []);
+
+  const resetResult = () => setAnalysisResult(null);
+
+  const isExecutivePulse = (res: AnalysisResult): res is ExecutivePulse => {
+    return (res as ExecutivePulse).header !== undefined;
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900 text-gray-100">
@@ -42,8 +48,20 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {executivePulse ? (
-        <Dashboard pulse={executivePulse} />
+      {analysisResult ? (
+        <div className="w-full flex flex-col items-center">
+          {isExecutivePulse(analysisResult) ? (
+            <Dashboard pulse={analysisResult} />
+          ) : (
+            <RawDataView data={analysisResult as RawShippingData[]} />
+          )}
+          <button 
+            onClick={resetResult}
+            className="mt-4 text-indigo-400 hover:text-indigo-300 transition-colors font-medium border border-indigo-500/30 px-6 py-2 rounded-lg"
+          >
+            ← Back to Input
+          </button>
+        </div>
       ) : (
         <InputForm onSubmit={handleFormSubmit} isLoading={isLoading} />
       )}
