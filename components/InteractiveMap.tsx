@@ -23,6 +23,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [mouseCoords, setMouseCoords] = useState({ x: 0, y: 0 });
   const [showHeatmap, setShowHeatmap] = useState(true);
+  const [clientMousePos, setClientMousePos] = useState({ x: 0, y: 0 });
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -105,6 +106,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const x = ((e.clientX - rect.left) / rect.width) * 800;
     const y = ((e.clientY - rect.top) / rect.height) * 400;
     setMouseCoords({ x, y });
+    setClientMousePos({ x: e.clientX, y: e.clientY });
 
     if (!isPanning) return;
     
@@ -161,6 +163,22 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     >
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
       
+      {/* Region Tooltip */}
+      {hoveredRegion && (
+        <div 
+          className="fixed pointer-events-none z-[100] bg-indigo-900/90 backdrop-blur-md border border-indigo-400/50 px-3 py-1.5 rounded-md shadow-[0_0_20px_rgba(79,70,229,0.4)] text-[10px] font-mono text-indigo-100 uppercase tracking-widest animate-in fade-in zoom-in-95 duration-200"
+          style={{ 
+            left: clientMousePos.x + 15, 
+            top: clientMousePos.y + 15 
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+            SECTOR: {hoveredRegion}
+          </div>
+        </div>
+      )}
+
       <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
         <button onClick={() => setZoom(z => Math.min(z * 1.5, 12))} className="w-9 h-9 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-md flex items-center justify-center text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-xl font-bold">+</button>
         <button onClick={() => setZoom(z => Math.max(z / 1.5, 0.5))} className="w-9 h-9 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-md flex items-center justify-center text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-xl font-bold">-</button>
@@ -206,7 +224,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       <svg viewBox="0 0 800 400" className="w-full h-full">
         <defs>
           <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -252,9 +270,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
               <React.Fragment key={reg.id}>
                 <path 
                   d={reg.path}
-                  fill={isHovered ? "rgba(99, 102, 241, 0.18)" : "transparent"}
-                  stroke={isHovered ? "rgba(129, 140, 248, 0.9)" : "rgba(255, 255, 255, 0.01)"}
-                  strokeWidth={isHovered ? 2 / zoom : 1 / zoom}
+                  fill={isHovered ? "rgba(99, 102, 241, 0.25)" : "transparent"}
+                  stroke={isHovered ? "rgba(129, 140, 248, 1)" : "rgba(255, 255, 255, 0.01)"}
+                  strokeWidth={isHovered ? 2.5 / zoom : 1 / zoom}
                   filter={isHovered ? "url(#neonGlow)" : ""}
                   onMouseEnter={() => setHoveredRegion(reg.id)}
                   onMouseLeave={() => setHoveredRegion(null)}
@@ -263,10 +281,10 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 />
                 {isHovered && (
                   <g pointerEvents="none" className="animate-in fade-in zoom-in-95 duration-300">
-                    <path d={`M${reg.x},${reg.y + 15} L${reg.x},${reg.y} L${reg.x + 15},${reg.y}`} fill="none" stroke="#818cf8" strokeWidth={2/zoom} />
-                    <path d={`M${reg.x + reg.w - 15},${reg.y} L${reg.x + reg.w},${reg.y} L${reg.x + reg.w},${reg.y + 15}`} fill="none" stroke="#818cf8" strokeWidth={2/zoom} />
-                    <path d={`M${reg.x},${reg.y + reg.h - 15} L${reg.x},${reg.y + reg.h} L${reg.x + 15},${reg.y + reg.h}`} fill="none" stroke="#818cf8" strokeWidth={2/zoom} />
-                    <path d={`M${reg.x + reg.w - 15},${reg.y + reg.h} L${reg.x + reg.w},${reg.y + reg.h} L${reg.x + reg.w},${reg.y + reg.h - 15}`} fill="none" stroke="#818cf8" strokeWidth={2/zoom} />
+                    <path d={`M${reg.x},${reg.y + 15} L${reg.x},${reg.y} L${reg.x + 15},${reg.y}`} fill="none" stroke="#818cf8" strokeWidth={2.5/zoom} />
+                    <path d={`M${reg.x + reg.w - 15},${reg.y} L${reg.x + reg.w},${reg.y} L${reg.x + reg.w},${reg.y + 15}`} fill="none" stroke="#818cf8" strokeWidth={2.5/zoom} />
+                    <path d={`M${reg.x},${reg.y + reg.h - 15} L${reg.x},${reg.y + reg.h} L${reg.x + 15},${reg.y + reg.h}`} fill="none" stroke="#818cf8" strokeWidth={2.5/zoom} />
+                    <path d={`M${reg.x + reg.w - 15},${reg.y + reg.h} L${reg.x + reg.w},${reg.y + reg.h} L${reg.x + reg.w},${reg.y + reg.h - 15}`} fill="none" stroke="#818cf8" strokeWidth={2.5/zoom} />
                   </g>
                 )}
               </React.Fragment>
